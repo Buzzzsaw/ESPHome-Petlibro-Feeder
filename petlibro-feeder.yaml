@@ -34,8 +34,7 @@ globals:
 
 button:
   - platform: template
-    id: feed_button
-    name: "FEED"
+    name: "Feed"
     icon: "mdi:cat"
     on_press:
       - lambda: |-
@@ -43,7 +42,7 @@ button:
             resp.service = "light.turn_on";
             HomeassistantServiceMap entity_id_kv;
             entity_id_kv.key = "entity_id";
-            entity_id_kv.value = "light.esplight";
+            entity_id_kv.value = "light.petlibro_motor";
             resp.data.push_back(entity_id_kv);
             id(api_id).send_homeassistant_service_call(resp);
 
@@ -51,7 +50,6 @@ button:
 
 number:
   - platform: template
-    id: portions_slider
     name: "Portions"
     step: 1
     min_value: 1
@@ -63,20 +61,20 @@ number:
 
 light:
   - platform: binary
-    name: "esplight"
-    output: light_output
+    name: "petlibro_motor"
+    output: motor_output
     restore_mode: ALWAYS_OFF
 
 output:
-  - id: light_output
+  - id: motor_output
     platform: gpio
     pin:
       number: D2
       inverted: True
 
 binary_sensor:
-  - name: "espbutton"
-    platform: gpio
+  - platform: gpio
+    id: encoder_switch
     pin:
       number: D6
       mode: INPUT_PULLUP
@@ -92,13 +90,10 @@ binary_sensor:
               resp.service = "light.turn_off";
               HomeassistantServiceMap entity_id_kv;
               entity_id_kv.key = "entity_id";
-              entity_id_kv.value = "light.esplight";
+              entity_id_kv.value = "light.petlibro_motor";
               resp.data.push_back(entity_id_kv);
               id(api_id).send_homeassistant_service_call(resp);
 
               id(button_counter) = 0;
             }
-#        - homeassistant.service:
-#            service: light.toggle
-#            data:
-#              entity_id: light.esplight
+
