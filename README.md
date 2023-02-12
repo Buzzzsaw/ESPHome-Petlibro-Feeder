@@ -1,1 +1,3 @@
-# ESPHome-Petlibro-Feeder
+# Petlibro Feeder mod for ESPHome
+
+Currently a work in progress...

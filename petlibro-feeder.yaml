@@ -1,0 +1,104 @@
+substitutions:
+  name: petlibro-feeder
+
+esphome:
+  name: ${name}
+
+esp8266:
+  board: d1_mini
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  ap:
+    ssid: "${name}-AP"
+    password: !secret wifi_password
+    ap_timeout: 3min
+
+captive_portal:
+
+logger:
+
+api:
+  id: api_id
+
+ota:
+
+globals:
+  - id: button_counter
+    type: int
+    initial_value: '0'
+  - id: target_number
+    type: int
+    initial_value: '1'
+
+button:
+  - platform: template
+    id: feed_button
+    name: "FEED"
+    icon: "mdi:cat"
+    on_press:
+      - lambda: |-
+            HomeassistantServiceResponse resp;
+            resp.service = "light.turn_on";
+            HomeassistantServiceMap entity_id_kv;
+            entity_id_kv.key = "entity_id";
+            entity_id_kv.value = "light.esplight";
+            resp.data.push_back(entity_id_kv);
+            id(api_id).send_homeassistant_service_call(resp);
+
+            id(button_counter) = 0;
+
+number:
+  - platform: template
+    id: portions_slider
+    name: "Portions"
+    step: 1
+    min_value: 1
+    max_value: 10
+    mode: slider
+    set_action:
+      then:
+        - lambda:  id(target_number) = x;
+
+light:
+  - platform: binary
+    name: "esplight"
+    output: light_output
+    restore_mode: ALWAYS_OFF
+
+output:
+  - id: light_output
+    platform: gpio
+    pin:
+      number: D2
+      inverted: True
+
+binary_sensor:
+  - name: "espbutton"
+    platform: gpio
+    pin:
+      number: D6
+      mode: INPUT_PULLUP
+    filters:
+      - delayed_on:  10ms
+      - delayed_off: 10ms
+    on_press:
+      then:
+        - lambda: |-
+            id(button_counter) += 1;
+            if (id(button_counter) >= id(target_number)) {
+              HomeassistantServiceResponse resp;
+              resp.service = "light.turn_off";
+              HomeassistantServiceMap entity_id_kv;
+              entity_id_kv.key = "entity_id";
+              entity_id_kv.value = "light.esplight";
+              resp.data.push_back(entity_id_kv);
+              id(api_id).send_homeassistant_service_call(resp);
+
+              id(button_counter) = 0;
+            }
+#        - homeassistant.service:
+#            service: light.toggle
+#            data:
+#              entity_id: light.esplight
