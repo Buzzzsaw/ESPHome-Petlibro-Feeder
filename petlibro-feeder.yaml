@@ -97,3 +97,8 @@ binary_sensor:
               id(button_counter) = 0;
             }
 
+sensor:
+  - platform: ultrasonic
+    name: "Food Level"
+    trigger_pin: D3
+    echo_pin: D4
