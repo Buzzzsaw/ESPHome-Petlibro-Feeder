@@ -58,6 +58,14 @@ number:
     min_value: 0.01
     max_value: 1.00
     optimistic: true
+  - platform: template
+    id: empty_distance
+    name: "Empty Distance"
+    icon: mdi:arrow-expand-vertical
+    step: 0.01
+    min_value: 0.01
+    max_value: 1.00
+    optimistic: true
 
 output:
   - platform: esp8266_pwm
@@ -86,5 +94,12 @@ binary_sensor:
 sensor:
   - platform: ultrasonic
     name: "Food Level"
+    icon: mdi:gauge
     trigger_pin: D6
     echo_pin: D5
+    update_interval: 60s
+    state_class: measurement
+    unit_of_measurement: "%"
+    accuracy_decimals: 0
+    filters:
+      - lambda: return 100.0 * (id(empty_distance).state - x) / id(empty_distance).state;
