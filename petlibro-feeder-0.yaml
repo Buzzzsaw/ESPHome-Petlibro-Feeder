@@ -24,7 +24,6 @@ captive_portal:
 logger:
 
 api:
-  id: api_id
 
 ota:
 
@@ -32,9 +31,6 @@ globals:
   - id: button_counter
     type: int
     initial_value: '0'
-  - id: target_number
-    type: int
-    initial_value: '1'
 
 button:
   - platform: template
@@ -42,33 +38,31 @@ button:
     icon: "mdi:cat"
     on_press:
       - lambda: |-
-            HomeassistantServiceResponse resp;
-            resp.service = "switch.turn_on";
-            HomeassistantServiceMap entity_id_kv;
-            entity_id_kv.key = "entity_id";
-            entity_id_kv.value = "switch.motor";
-            resp.data.push_back(entity_id_kv);
-            id(api_id).send_homeassistant_service_call(resp);
-
+            id(motor_output).set_level(id(motor_speed).state);
             id(button_counter) = 0;
 
 number:
   - platform: template
+    id: target_portions
     name: "Portions"
+    icon: mdi:counter
     step: 1
     min_value: 1
     max_value: 10
-    mode: slider
-    set_action:
-      then:
-        - lambda:  id(target_number) = x;
+    optimistic: true
+  - platform: template
+    id: motor_speed
+    name: "Motor Speed"
+    icon: mdi:speedometer
+    step: 0.01
+    min_value: 0.01
+    max_value: 1.00
+    optimistic: true
 
-switch:
-  - platform: gpio
-    id: motor
-    name: "Motor"
+output:
+  - platform: esp8266_pwm
+    id: motor_output
     pin: D2
-    restore_mode: ALWAYS_OFF
 
 binary_sensor:
   - platform: gpio
@@ -84,15 +78,8 @@ binary_sensor:
       then:
         - lambda: |-
             id(button_counter) += 1;
-            if (id(button_counter) >= id(target_number)) {
-              HomeassistantServiceResponse resp;
-              resp.service = "switch.turn_off";
-              HomeassistantServiceMap entity_id_kv;
-              entity_id_kv.key = "entity_id";
-              entity_id_kv.value = "switch.motor";
-              resp.data.push_back(entity_id_kv);
-              id(api_id).send_homeassistant_service_call(resp);
-
+            if (id(button_counter) >= id(target_portions).state) {
+              id(motor_output).turn_off();
               id(button_counter) = 0;
             }
 
